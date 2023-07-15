@@ -7,11 +7,11 @@ from stable_baselines3.common.env_util import make_vec_env
 # Load the trained model
 model = PPO.load("ppo_trading_agent")
 
-df = pd.read_csv('nse_indexes.csv')
-# df = pd.read_csv('test_indexes.csv')
+# df = pd.read_csv('nse_indexes.csv')
+df = pd.read_csv('test_indexes.csv')
 
 # Initialize the environment
-env = TradingEnv(df, 60)
+env = TradingEnv(df, 60, False)
 
 vec_env = make_vec_env(lambda: env, n_envs=1)
 # Evaluate the trained model
@@ -23,7 +23,7 @@ vec_env = make_vec_env(lambda: env, n_envs=1)
 # by simulating it on the environment
 
 obs = vec_env.reset()
-for i in range(6531-60):
+for i in range(df.shape[0] - 1 - 60):
     action, _states = model.predict(obs)
     obs, rewards, dones, info = vec_env.step(action)
-    print(f'Step: {env.current_step}, Action: {"Buy" if action==1 else "Sell" if action==2 else "Hold" }, balance: {env.balance}, Rewards: {rewards}, Date: {env.date}, Buy and Hold: {env.buy_and_hold * env.initial_balance}, done: {dones}')
+    print(f'Step: {env.current_step}, Action: {"Buy" if action==1 else "Sell" if action==2 else "Hold" }, balance: {env.current_balance()}, Rewards: {rewards}, Date: {env.date}, Buy and Hold: {env.current_buy_and_hold_balance()}, done: {dones}')
