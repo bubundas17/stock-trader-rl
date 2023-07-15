@@ -18,7 +18,7 @@ class TradingEnv(gym.Env):
         self.df = df
         self.reward_range = (-np.inf, np.inf)
         self.window_size = window_size
-        self.prices, self.features = self._process_data()
+        self.prices, self.volume, self.high, self.low, self.features = self._process_data()
         self.n_features = self.features.shape[1]
         self.balance = self.initial_balance
         self.position = None
@@ -77,13 +77,9 @@ class TradingEnv(gym.Env):
                 reward =  (self.balance / self.initial_balance) - self.buy_and_hold
                 self.last_action = 2
                 self.hold_counts = 0
-                # reward = 0
                 self.position = None
-
-
         
         self.current_step += 1
-        # done = self.current_step == len(self.prices)
         done = False
         if (self.last_action == 2 and self.balance - self.buy_and_hold * self.initial_balance < -self.max_loss):
             done = True
@@ -95,41 +91,42 @@ class TradingEnv(gym.Env):
             done = True
             reward = (self.balance / self.initial_balance) - self.buy_and_hold
 
-        # Calculate loss and check if it exceeds the maximum loss
-        # if self.position is not None:
-        #     loss = (current_price - self.position) / self.position
-        #     self.total_loss += loss
-        #     if self.total_loss < -self.max_loss:
-        #         done = True
-
         return self._get_observation(), reward, done, {}
 
     def render(self, mode='human'):
         if mode == 'human':
             profit = self.balance - 10000
             print(f'Step: {self.current_step}, Profit: {profit}')
-            return None
         else:
             super(TradingEnv, self).render(mode=mode)
 
 
-    # def _get_observation(self):
-    #     window = self.features[self.current_step - self.window_size: self.current_step, :]
-    #     balance_norm = self.balance / 10000
-    #     position = int(self.position is not None)
-    #     return np.append(window.flatten(), [position, balance_norm, self.last_action])
-    
     def _get_observation(self):
-        window = self.prices[self.current_step - self.window_size: self.current_step, :]
-        window_pct_change = (window - window[0]) / window[0]  # calculate percentage change relative to the first window's element
-        window_pct_change = window_pct_change.flatten()
+        window_prices = self.prices[self.current_step - self.window_size: self.current_step]
+        window_volume = self.volume[self.current_step - self.window_size: self.current_step]
+        window_high = self.high[self.current_step - self.window_size: self.current_step]
+        window_low = self.low[self.current_step - self.window_size: self.current_step]
+
+        window_prices_pct_change = (window_prices - window_prices[0]) / (window_prices[0] + np.finfo(np.float32).eps)
+        window_volume_pct_change = (window_volume - window_volume[0]) / (window_volume[0] + np.finfo(np.float32).eps)
+        window_high_pct_change = (window_high - window_high[0]) / (window_high[0] + np.finfo(np.float32).eps)
+        window_low_pct_change = (window_low - window_low[0]) / (window_low[0] + np.finfo(np.float32).eps)
+      
         balance_norm = self.balance / self.initial_balance
         position = int(self.position is not None)
-        data = np.append(window_pct_change.flatten(), [position, balance_norm, self.last_action])
+
+        data = np.concatenate([window_prices_pct_change.flatten(), window_volume_pct_change.flatten(), window_high_pct_change.flatten(), 
+        window_low_pct_change.flatten(), np.array([position, balance_norm, self.last_action])])
+
         return data
 
     def _process_data(self):
-        prices = self.df['Close'].values
-        prices = prices.reshape(-1, 1)
-        features = np.log1p(prices)
-        return prices, features
+        prices = self.df['Close'].values.reshape(-1, 1)
+        volume = self.df['Volume'].values.reshape(-1, 1)
+        high = self.df['High'].values.reshape(-1, 1)
+        low = self.df['Low'].values.reshape(-1, 1)
+
+        features = np.concatenate([np.log1p(prices), np.log1p(volume), np.log1p(high), 
+                                   np.log1p(low)], axis=1)
+
+        return prices, volume, high, low, features

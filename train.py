@@ -1,11 +1,6 @@
-import gym
 import pandas as pd
-import numpy as np
-from gym import spaces
 from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.env_util import make_vec_env
-from gym.utils import seeding
 
 from env import TradingEnv
 
