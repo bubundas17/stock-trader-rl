@@ -7,8 +7,8 @@ from stable_baselines3.common.env_util import make_vec_env
 # Load the trained model
 model = PPO.load("ppo_trading_agent")
 
-# df = pd.read_csv('nse_indexes.csv')
-df = pd.read_csv('test_indexes.csv')
+df = pd.read_csv('nse_indexes.csv')
+# df = pd.read_csv('test_indexes.csv')
 
 # Initialize the environment
 env = TradingEnv(df, 60)
