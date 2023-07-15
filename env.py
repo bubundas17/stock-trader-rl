@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 from gym import spaces
 from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3.common.env_util import make_vec_env
 from gym.utils import seeding
 
 np.random.seed(0)
@@ -46,6 +44,7 @@ class TradingEnv(gym.Env):
         self.position = None
         self.last_action = 1
         self.buy_and_hold = 1
+        self.hold_counts = 0
         self.total_loss = 0
         self.current_step = self.window_size
         self.initial_price = float(self.df.loc[self.current_step, 'Close'])

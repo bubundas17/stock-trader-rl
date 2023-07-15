@@ -20,10 +20,10 @@ vec_env = make_vec_env(lambda: env, n_envs=1)
 # Initialize the PPO agent
 # model = PPO("MlpPolicy", vec_env, verbose=1, policy_kwargs=dict(net_arch=[4096*2, 4096*2, 4096]))
 # model = PPO("MlpPolicy", vec_env, verbose=1, policy_kwargs=dict(net_arch=[4096*2, 4096*2, 4096]))
-model = PPO("MlpPolicy", vec_env, verbose=1, policy_kwargs=dict(net_arch=[4096*2, 4096*2, 4096]))
+model = PPO("MlpPolicy", vec_env, verbose=1, policy_kwargs=dict(net_arch=[4096*2, 4096]))
 
 # Train the agent for 10000 steps
-model.learn(total_timesteps=50000 * 4)
+model.learn(total_timesteps=50000 * 16)
 
 # Save the model
 model.save("ppo_trading_agent")
